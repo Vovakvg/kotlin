@@ -1,0 +1,79 @@
+import java.util.*
+import kotlin.math.pow
+
+fun main() {
+    println("Enter an expression:")
+    val expression = readLine()!!
+    val result = evaluateExpression(expression)
+    println("The result is $result")
+}
+fun evaluateExpression(expression: String): Double {
+    val outputQueue = LinkedList<String>()
+    val operatorStack = Stack<Char>()
+
+    var number = ""
+    for (char in expression) {
+        if (char.isDigit() || char == '.') {
+            number += char
+        } else {
+            if (number.isNotEmpty()) {
+                outputQueue.add(number)
+                number = ""
+            }
+
+            when (char) {
+                '+', '-', '*', '/', '^' -> {
+                    while (operatorStack.isNotEmpty() && operatorStack.peek() != '(' && getPrecedence(char) <= getPrecedence(operatorStack.peek())) {
+                        outputQueue.add(operatorStack.pop().toString())
+                    }
+                    operatorStack.push(char)
+                }
+                '(' -> operatorStack.push(char)
+                ')' -> {
+                    while (operatorStack.peek() != '(') {
+                        outputQueue.add(operatorStack.pop().toString())
+                    }
+                    operatorStack.pop()
+                }
+            }
+        }
+    }
+
+    if (number.isNotEmpty()) {
+        outputQueue.add(number)
+    }
+
+    while (operatorStack.isNotEmpty()) {
+        outputQueue.add(operatorStack.pop().toString())
+    }
+
+    val stack = Stack<Double>()
+    for (token in outputQueue) {
+        if (token.matches("-?\\d+(\\.\\d+)?".toRegex())) {
+            stack.push(token.toDouble())
+        } else {
+            val num2 = stack.pop()
+            val num1 = stack.pop()
+            val result = when (token) {
+                "+" -> num1 + num2
+                "-" -> num1 - num2
+                "*" -> num1 * num2
+                "/" -> num1 / num2
+                "^" -> num1.pow(num2)
+                else -> throw IllegalArgumentException("Invalid operator: $token")
+            }
+            stack.push(result)
+        }
+    }
+
+    return stack.pop()
+}
+
+fun getPrecedence(operator: Char): Int {
+    return when (operator) {
+        '+', '-' -> 1
+        '*', '/' -> 2
+        '^' -> 3
+        else -> -1
+    }
+}
